@@ -210,7 +210,7 @@ export function useToggle(
         [descriptionProps.id, errorMessageProps.id, ariaDescribedby].filter(Boolean).join(' ') ||
         undefined,
       onChange,
-      disabled: isDisabled,
+      disabled: !isDisabled,
       ...(value == null ? {} : {value}),
       name,
       form,

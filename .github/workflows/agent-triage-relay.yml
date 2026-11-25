@@ -1,0 +1,36 @@
+# Relays GitHub issue label events to a Cursor Automation webhook.
+# GitHub webhooks cannot send custom auth headers, so this workflow forwards
+# the labeled-issue event with the Authorization header the automation expects.
+
+name: Agent triage relay
+on:
+  issues:
+    types: [labeled]
+permissions:
+  contents: read
+jobs:
+  relay:
+    if: github.event.label.name == 'agent-triage' && github.repository == 'lucasbuck/react-spectrum'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post issue event to Cursor Automation
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_WEBHOOK_URL }}
+          AUTH: ${{ secrets.CURSOR_WEBHOOK_AUTH }}
+          EVENT_JSON: ${{ toJson(github.event) }}
+        run: |
+          # Body is the issue event JSON itself, with no added fields.
+          printf '%s' "$EVENT_JSON" > event.json
+          if [[ "$AUTH" =~ :[[:space:]] ]]; then
+            curl --fail-with-body --request POST \
+              --url "$WEBHOOK_URL" \
+              --header "$AUTH" \
+              --header "Content-Type: application/json" \
+              --data-binary @event.json
+          else
+            curl --fail-with-body --request POST \
+              --url "$WEBHOOK_URL" \
+              --header "Authorization: Bearer $AUTH" \
+              --header "Content-Type: application/json" \
+              --data-binary @event.json
+          fi

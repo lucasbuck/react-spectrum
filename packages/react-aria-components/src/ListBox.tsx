@@ -101,6 +101,7 @@ import {SeparatorContext} from './Separator';
 import {SharedElementTransition} from './SharedElementTransition';
 import {TextContext} from './Text';
 import {useCollator} from 'react-aria/useCollator';
+import {useDisabledListState} from 'react-stately/private/list/useDisabledListState';
 import {useFocus} from 'react-aria/useFocus';
 import {useFocusRing} from 'react-aria/useFocusRing';
 import {useHover} from 'react-aria/useHover';
@@ -127,6 +128,12 @@ export interface ListBoxRenderProps {
    * @selector [data-focus-visible]
    */
   isFocusVisible: boolean;
+  /**
+   * Whether the listbox is disabled.
+   *
+   * @selector [data-disabled]
+   */
+  isDisabled: boolean;
   /**
    * Whether the listbox is currently the active drop target.
    *
@@ -241,7 +248,8 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
   [props, listBoxRef] = useContextProps(props, listBoxRef, SelectableCollectionContext);
   let {dragAndDropHooks, layout = 'stack', orientation = 'vertical', filter} = props;
   // oxlint-disable-next-line react/react-compiler
-  let state = UNSTABLE_useFilteredListState(inputState, filter);
+  let filteredState = UNSTABLE_useFilteredListState(inputState, filter);
+  let state = useDisabledListState(filteredState, props.isDisabled);
   let {collection, selectionManager} = state;
   let isListDraggable = !!dragAndDropHooks?.useDraggableCollectionState;
   let isListDroppable = !!dragAndDropHooks?.useDroppableCollectionState;
@@ -370,6 +378,7 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
     isEmpty,
     isFocused,
     isFocusVisible,
+    isDisabled: !!props.isDisabled,
     layout: props.layout || 'stack',
     orientation,
     state
@@ -412,6 +421,7 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
         data-empty={isEmpty || undefined}
         data-focused={isFocused || undefined}
         data-focus-visible={isFocusVisible || undefined}
+        data-disabled={props.isDisabled || undefined}
         data-layout={props.layout || 'stack'}
         data-orientation={orientation}>
         <Provider

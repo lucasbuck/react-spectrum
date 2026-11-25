@@ -40,6 +40,11 @@ export interface ListBoxProps<T> extends CollectionBase<T>, MultipleSelection, F
   autoFocus?: boolean | FocusStrategy;
   /** Whether focus should wrap around when the end/start is reached. */
   shouldFocusWrap?: boolean;
+  /**
+   * Whether the listbox is disabled.
+   * When true, every option is non-interactive, in addition to any keys in `disabledKeys`.
+   */
+  isDisabled?: boolean;
 }
 
 export interface AriaListBoxPropsBase<T> extends ListBoxProps<T>, DOMProps, AriaLabelingProps {
@@ -195,7 +200,8 @@ export function useListBox<T>(
       {
         role: 'listbox',
         'aria-orientation': orientation,
-        ...mergeProps(fieldProps, listProps)
+        ...mergeProps(fieldProps, listProps),
+        'aria-disabled': props.isDisabled || undefined
       }
     )
   };

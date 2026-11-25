@@ -83,6 +83,53 @@ export function useListState<T>(props: ListProps<T>): ListState<T> {
 }
 
 /**
+ * A disabled-key set that also reports every key as disabled.
+ * Used when a whole collection is disabled, in addition to `disabledKeys`.
+ */
+class AllDisabledKeys extends Set<Key> {
+  has(_key: Key): boolean {
+    return true;
+  }
+}
+
+/**
+ * Returns list state where every item is disabled when `isDisabled` is true.
+ * Explicit `disabledKeys` still apply when the list is not disabled.
+ * The underlying selection state is shared, so controlled selection stays in sync.
+ */
+export function useDisabledListState<T>(state: ListState<T>, isDisabled?: boolean): ListState<T> {
+  let disabledKeys = useMemo(() => {
+    if (!isDisabled) {
+      return null;
+    }
+
+    return new AllDisabledKeys(state.disabledKeys);
+  }, [isDisabled, state.disabledKeys]);
+
+  let selectionManager = useMemo(() => {
+    if (!disabledKeys) {
+      return null;
+    }
+
+    return state.selectionManager.withDisabledKeys(disabledKeys);
+  }, [disabledKeys, state.selectionManager]);
+
+  let disabledState = useMemo(() => {
+    if (!disabledKeys || !selectionManager) {
+      return null;
+    }
+
+    return {
+      collection: state.collection,
+      disabledKeys,
+      selectionManager
+    };
+  }, [disabledKeys, selectionManager, state.collection]);
+
+  return disabledState ?? state;
+}
+
+/**
  * Filters a collection using the provided filter function and returns a new ListState.
  */
 export function UNSTABLE_useFilteredListState<T>(

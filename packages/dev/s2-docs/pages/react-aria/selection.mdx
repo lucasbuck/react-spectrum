@@ -919,7 +919,7 @@ import {Table, TableHeader, Column, Row, TableBody, Cell} from 'vanilla-starter/
 
 </ExampleSwitcher>
 
-In dynamic collections, it may be more convenient to use the `disabledKeys` prop at the collection level instead of `isDisabled` on individual items. This accepts a list of item ids that are disabled.
+In dynamic collections, it may be more convenient to use the `disabledKeys` prop at the collection level instead of `isDisabled` on individual items. This accepts a list of item ids that are disabled. To disable every item in a ListBox without listing those ids, pass `isDisabled` to the list. It is combined with `disabledKeys`.
 
 <ExampleSwitcher type="component" examples={['ListBox', 'GridList', 'Tree', 'TagGroup', 'Table']}>
 

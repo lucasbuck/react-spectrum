@@ -41,6 +41,7 @@ import React, {
 } from 'react';
 import {ReusableView} from 'react-stately/useVirtualizerState';
 import styles from '@adobe/spectrum-css-temp/components/menu/vars.css';
+import {useDisabledListState} from 'react-stately/private/list/useDisabledListState';
 import {useLocalizedStringFormatter} from 'react-aria/useLocalizedStringFormatter';
 import {useObjectRef} from 'react-aria/useObjectRef';
 import {useProvider} from '../provider/Provider';
@@ -93,9 +94,9 @@ export const ListBoxBase = React.forwardRef(function ListBoxBase<T extends objec
   props: ListBoxBaseProps<T>,
   ref: ForwardedRef<HTMLDivElement | null>
 ) {
+  let state = useDisabledListState(props.state, props.isDisabled);
   let {
     layout,
-    state,
     shouldFocusOnHover = false,
     shouldUseVirtualFocus = false,
     domProps = {},

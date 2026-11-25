@@ -43,6 +43,8 @@ export class SelectionManager implements MultipleSelectionManager {
   private _isSelectAll: boolean | null;
   private layoutDelegate: LayoutDelegate | null;
   private fullCollection: Collection<Node<unknown>> | null;
+  /** Replaces `state.disabledKeys` when the whole collection is disabled. */
+  private disabledKeysOverride: Set<Key> | null = null;
 
   constructor(
     collection: Collection<Node<unknown>>,
@@ -208,7 +210,7 @@ export class SelectionManager implements MultipleSelectionManager {
   }
 
   get disabledKeys(): Set<Key> {
-    return this.state.disabledKeys;
+    return this.disabledKeysOverride ?? this.state.disabledKeys;
   }
 
   get disabledBehavior(): DisabledBehavior {
@@ -429,6 +431,11 @@ export class SelectionManager implements MultipleSelectionManager {
    */
   selectAll(): void {
     if (!this.isSelectAll && this.selectionMode === 'multiple') {
+      // Nothing to select when every item is disabled. Don't commit a select-all
+      // that cannot be represented by any item.
+      if (this.collection.size > 0 && this.getSelectAllKeys().length === 0) {
+        return;
+      }
       this.state.setSelectedKeys('all');
     }
   }
@@ -512,7 +519,7 @@ export class SelectionManager implements MultipleSelectionManager {
   }
 
   private canSelectItemIn(key: Key, collection: Collection<Node<unknown>>): boolean {
-    if (this.state.selectionMode === 'none' || this.state.disabledKeys.has(key)) {
+    if (this.state.selectionMode === 'none' || this.disabledKeys.has(key)) {
       return false;
     }
 
@@ -528,7 +535,7 @@ export class SelectionManager implements MultipleSelectionManager {
     let item = this.collection.getItem(key);
     return (
       this.state.disabledBehavior === 'all' &&
-      (this.state.disabledKeys.has(key) || !!item?.props?.isDisabled) &&
+      (this.disabledKeys.has(key) || !!item?.props?.isDisabled) &&
       item?.props?.disabledBehavior !== 'selection'
     );
   }
@@ -542,10 +549,22 @@ export class SelectionManager implements MultipleSelectionManager {
   }
 
   withCollection(collection: Collection<Node<unknown>>): SelectionManager {
-    return new SelectionManager(collection, this.state, {
+    let manager = new SelectionManager(collection, this.state, {
       allowsCellSelection: this.allowsCellSelection,
       layoutDelegate: this.layoutDelegate || undefined,
       fullCollection: this.fullCollection ?? this.collection
     });
+    manager.disabledKeysOverride = this.disabledKeysOverride;
+    return manager;
+  }
+
+  /**
+   * Returns a selection manager that reports `disabledKeys` as the provided set.
+   * Selection and focus state are shared with this manager.
+   */
+  withDisabledKeys(disabledKeys: Set<Key>): SelectionManager {
+    let manager = this.withCollection(this.collection);
+    manager.disabledKeysOverride = disabledKeys;
+    return manager;
   }
 }

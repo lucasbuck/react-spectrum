@@ -242,7 +242,7 @@ import {ListBox} from 'vanilla-starter/ListBox';
 
 ## Selection
 
-Use the `selectionMode` prop to enable single or multiple selection. The selected items can be controlled via the `selectedKeys` prop, matching the `id` prop of the items. Items can be disabled with the `isDisabled` prop. See the [selection guide](selection?component=ListBox) for more details.
+Use the `selectionMode` prop to enable single or multiple selection. The selected items can be controlled via the `selectedKeys` prop, matching the `id` prop of the items. Disable an individual item with `isDisabled` on `ListBoxItem`, or disable every item by setting `isDisabled` on `ListBox`. That list-level prop is combined with `disabledKeys`. See the [selection guide](selection?component=ListBox) for more details.
 
 ```tsx render docs={docs.exports.ListBox} links={docs.links} props={['selectionMode', 'selectionBehavior', 'disallowEmptySelection']} initialProps={{selectionMode: 'multiple'}} wide
 "use client";

@@ -134,6 +134,34 @@ describe('PreviewTrigger', () => {
     expect(link).toHaveAttribute('aria-controls', preview.id);
   });
 
+  it('labels the preview dialog by the trigger', async () => {
+    let {getByRole, getByTestId} = render(<TestPreviewTrigger />);
+    let link = getByRole('link');
+    expect(link.id).toBeTruthy();
+
+    await user.tab();
+    let preview = getByTestId('preview');
+    expect(preview).toHaveAttribute('role', 'dialog');
+    expect(preview).toHaveAttribute('aria-labelledby', link.id);
+    expect(getByRole('dialog')).toHaveAccessibleName('Example');
+  });
+
+  it('lets an aria-label on the popover override the trigger label', async () => {
+    let {getByRole} = render(
+      <PreviewTrigger delay={0} closeDelay={0}>
+        <Link href="https://example.com">Example</Link>
+        <Popover aria-label="Example details">
+          <p>Preview content</p>
+        </Popover>
+      </PreviewTrigger>
+    );
+
+    await user.tab();
+    let dialog = getByRole('dialog');
+    expect(dialog).not.toHaveAttribute('aria-labelledby');
+    expect(dialog).toHaveAccessibleName('Example details');
+  });
+
   it('delays opening on keyboard focus', async () => {
     let {getByRole, getByTestId, queryByTestId} = render(<TestPreviewTrigger delay={300} />);
     let link = getByRole('link');

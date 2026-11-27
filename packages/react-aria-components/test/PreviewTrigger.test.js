@@ -134,6 +134,67 @@ describe('PreviewTrigger', () => {
     expect(link).toHaveAttribute('aria-controls', preview.id);
   });
 
+  it('labels the preview dialog by the trigger by default', async () => {
+    let {getByRole} = render(<TestPreviewTrigger />);
+    let link = getByRole('link');
+
+    await user.tab();
+    let dialog = getByRole('dialog');
+    expect(link.id).toBeTruthy();
+    expect(dialog).toHaveAttribute('aria-labelledby', link.id);
+    expect(link.getAttribute('aria-describedby')).toContain(dialog.id);
+  });
+
+  it('labels the preview dialog by a trigger with its own id', async () => {
+    let {getByRole} = render(
+      <PreviewTrigger delay={0}>
+        <Link id="my-link" href="https://example.com">
+          Example
+        </Link>
+        <Popover>
+          <p>Preview content</p>
+        </Popover>
+      </PreviewTrigger>
+    );
+
+    await user.tab();
+    expect(getByRole('link')).toHaveAttribute('id', 'my-link');
+    expect(getByRole('dialog')).toHaveAttribute('aria-labelledby', 'my-link');
+  });
+
+  it('prefers an aria-label on the Popover over the trigger label', async () => {
+    let {getByRole} = render(
+      <PreviewTrigger delay={0}>
+        <Link href="https://example.com">Example</Link>
+        <Popover aria-label="Example preview">
+          <p>Preview content</p>
+        </Popover>
+      </PreviewTrigger>
+    );
+
+    await user.tab();
+    let dialog = getByRole('dialog');
+    expect(dialog).toHaveAttribute('aria-label', 'Example preview');
+    expect(dialog).not.toHaveAttribute('aria-labelledby');
+  });
+
+  it('prefers an aria-labelledby on the Popover over the trigger label', async () => {
+    let {getByRole} = render(
+      <>
+        <span id="custom-label">Custom label</span>
+        <PreviewTrigger delay={0}>
+          <Link href="https://example.com">Example</Link>
+          <Popover aria-labelledby="custom-label">
+            <p>Preview content</p>
+          </Popover>
+        </PreviewTrigger>
+      </>
+    );
+
+    await user.tab();
+    expect(getByRole('dialog')).toHaveAttribute('aria-labelledby', 'custom-label');
+  });
+
   it('delays opening on keyboard focus', async () => {
     let {getByRole, getByTestId, queryByTestId} = render(<TestPreviewTrigger delay={300} />);
     let link = getByRole('link');

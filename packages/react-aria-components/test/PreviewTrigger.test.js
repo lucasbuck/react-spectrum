@@ -163,6 +163,70 @@ describe('PreviewTrigger', () => {
     expect(queryByTestId('preview')).not.toBeInTheDocument();
   });
 
+  it('labels the preview dialog by the trigger by default', async () => {
+    let {getByRole, getByTestId} = render(<TestPreviewTrigger />);
+    let link = getByRole('link');
+
+    await user.tab();
+    act(() => jest.runAllTimers());
+
+    let preview = getByTestId('preview');
+    expect(preview).toHaveAttribute('role', 'dialog');
+    expect(link.id).toBeTruthy();
+    expect(preview).toHaveAttribute('aria-labelledby', link.id);
+    expect(getByRole('dialog', {name: 'Example'})).toBe(preview);
+  });
+
+  it('prefers an aria-label or aria-labelledby on the Popover over the trigger label', async () => {
+    let {getByRole, getByTestId, rerender} = render(
+      <PreviewTrigger delay={0} closeDelay={0}>
+        <Link href="https://example.com">Example</Link>
+        <Popover data-testid="preview" aria-label="Custom label">
+          <p>Preview content</p>
+        </Popover>
+      </PreviewTrigger>
+    );
+
+    await user.tab();
+    act(() => jest.runAllTimers());
+
+    let preview = getByTestId('preview');
+    expect(preview).toHaveAttribute('aria-label', 'Custom label');
+    expect(preview).not.toHaveAttribute('aria-labelledby');
+    expect(getByRole('dialog', {name: 'Custom label'})).toBe(preview);
+
+    rerender(
+      <PreviewTrigger delay={0} closeDelay={0}>
+        <Link href="https://example.com">Example</Link>
+        <Popover data-testid="preview" aria-labelledby="heading">
+          <h2 id="heading">Heading</h2>
+        </Popover>
+      </PreviewTrigger>
+    );
+
+    expect(getByTestId('preview')).toHaveAttribute('aria-labelledby', 'heading');
+    expect(getByRole('dialog', {name: 'Heading'})).toBe(getByTestId('preview'));
+  });
+
+  it('labels the preview dialog by the trigger when the trigger has a custom id', async () => {
+    let {getByRole, getByTestId} = render(
+      <PreviewTrigger delay={0} closeDelay={0}>
+        <Link id="custom-id" href="https://example.com">
+          Example
+        </Link>
+        <Popover data-testid="preview">
+          <p>Preview content</p>
+        </Popover>
+      </PreviewTrigger>
+    );
+
+    await user.tab();
+    act(() => jest.runAllTimers());
+
+    expect(getByRole('link')).toHaveAttribute('id', 'custom-id');
+    expect(getByTestId('preview')).toHaveAttribute('aria-labelledby', 'custom-id');
+  });
+
   it('is non-modal (no underlay)', async () => {
     let {getByRole, queryByTestId} = render(<TestPreviewTrigger />);
 

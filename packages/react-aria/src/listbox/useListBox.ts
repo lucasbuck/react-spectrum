@@ -35,11 +35,31 @@ import {useId} from '../utils/useId';
 import {useLabel} from '../label/useLabel';
 import {useSelectableList} from '../selection/useSelectableList';
 
+// Navigation returns no key, so focus never moves into an option. This stays off the
+// selection manager: marking every key disabled would hide an "all" selection.
+const disabledListKeyboardDelegate: KeyboardDelegate = {
+  getKeyBelow: () => null,
+  getKeyAbove: () => null,
+  getKeyLeftOf: () => null,
+  getKeyRightOf: () => null,
+  getFirstKey: () => null,
+  getLastKey: () => null,
+  getKeyPageAbove: () => null,
+  getKeyPageBelow: () => null,
+  getKeyForSearch: () => null
+};
+
 export interface ListBoxProps<T> extends CollectionBase<T>, MultipleSelection, FocusEvents {
   /** Whether to auto focus the listbox or an option. */
   autoFocus?: boolean | FocusStrategy;
   /** Whether focus should wrap around when the end/start is reached. */
   shouldFocusWrap?: boolean;
+  /**
+   * Whether the entire listbox is disabled.
+   * Every option is non-interactive, in addition to any keys in `disabledKeys`.
+   * Existing selection is left unchanged.
+   */
+  isDisabled?: boolean;
 }
 
 export interface AriaListBoxPropsBase<T> extends ListBoxProps<T>, DOMProps, AriaLabelingProps {
@@ -151,7 +171,17 @@ export function useListBox<T>(
     selectionManager: state.selectionManager,
     collection: state.collection,
     disabledKeys: state.disabledKeys,
-    linkBehavior
+    linkBehavior,
+    // Block keyboard selection changes without rewriting disabledKeys. A custom delegate
+    // passed by the caller is replaced so arrows, Home, and End cannot enter options.
+    ...(props.isDisabled
+      ? {
+          keyboardDelegate: disabledListKeyboardDelegate,
+          disallowSelectAll: true,
+          disallowTypeAhead: true,
+          escapeKeyBehavior: 'none' as const
+        }
+      : {})
   });
 
   let {focusWithinProps} = useFocusWithin({
@@ -170,6 +200,7 @@ export function useListBox<T>(
     isVirtualized: props.isVirtualized,
     onAction: props.onAction,
     linkBehavior,
+    isDisabled: props.isDisabled,
     // @ts-ignore
     UNSTABLE_itemBehavior: props['UNSTABLE_itemBehavior']
   });
@@ -195,7 +226,8 @@ export function useListBox<T>(
       {
         role: 'listbox',
         'aria-orientation': orientation,
-        ...mergeProps(fieldProps, listProps)
+        ...mergeProps(fieldProps, listProps),
+        'aria-disabled': props.isDisabled || undefined
       }
     )
   };

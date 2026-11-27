@@ -36,12 +36,18 @@ interface ListKeyboardDelegateOptions<T> {
   disabledKeys?: Set<Key>;
   disabledBehavior?: DisabledBehavior;
   layoutDelegate?: LayoutDelegate;
+  /**
+   * Whether every item is disabled. Keyboard navigation then skips the whole collection,
+   * in addition to `disabledKeys`.
+   */
+  isDisabled?: boolean;
 }
 
 export class ListKeyboardDelegate<T> implements KeyboardDelegate {
   private collection: Collection<Node<T>>;
   private disabledKeys: Set<Key>;
   private disabledBehavior: DisabledBehavior;
+  private collectionDisabled: boolean;
   private ref: RefObject<HTMLElement | null>;
   private collator: Intl.Collator | undefined;
   private layout: 'stack' | 'grid';
@@ -65,6 +71,7 @@ export class ListKeyboardDelegate<T> implements KeyboardDelegate {
       this.collator = opts.collator;
       this.disabledKeys = opts.disabledKeys || new Set();
       this.disabledBehavior = opts.disabledBehavior || 'all';
+      this.collectionDisabled = !!opts.isDisabled;
       this.orientation = opts.orientation || 'vertical';
       this.direction = opts.direction;
       this.layout = opts.layout || 'stack';
@@ -77,6 +84,7 @@ export class ListKeyboardDelegate<T> implements KeyboardDelegate {
       this.layout = 'stack';
       this.orientation = 'vertical';
       this.disabledBehavior = 'all';
+      this.collectionDisabled = false;
       this.layoutDelegate = new DOMLayoutDelegate(this.ref);
     }
 
@@ -89,6 +97,10 @@ export class ListKeyboardDelegate<T> implements KeyboardDelegate {
   }
 
   private isDisabled(item: Node<unknown>) {
+    if (this.collectionDisabled) {
+      return true;
+    }
+
     return (
       this.disabledBehavior === 'all' &&
       (item.props?.isDisabled || this.disabledKeys.has(item.key)) &&

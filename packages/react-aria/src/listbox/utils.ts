@@ -19,6 +19,8 @@ interface ListData {
   shouldFocusOnHover?: boolean;
   shouldUseVirtualFocus?: boolean;
   isVirtualized?: boolean;
+  /** Whether the whole list is disabled, in addition to per-item `disabledKeys`. */
+  isDisabled?: boolean;
   onAction?: (key: Key) => void;
   linkBehavior?: 'action' | 'selection' | 'override';
 }

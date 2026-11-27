@@ -180,7 +180,9 @@ export function useDragAndDrop<T = object>(options: DragAndDropOptions<T>): Drag
         // oxlint-disable-next-line react/react-compiler
         return useDraggableCollectionState({
           ...props,
-          ...options
+          ...options,
+          // List-level isDisabled must win over a drag hook that did not set it.
+          isDisabled: props.isDisabled || options.isDisabled
         } as DraggableCollectionStateOptions);
       };
       // oxlint-disable-next-line react/react-compiler
@@ -198,7 +200,11 @@ export function useDragAndDrop<T = object>(options: DragAndDropOptions<T>): Drag
         props: DroppableCollectionStateOptions
       ) {
         // oxlint-disable-next-line react/react-compiler
-        return useDroppableCollectionState({...props, ...options});
+        return useDroppableCollectionState({
+          ...props,
+          ...options,
+          isDisabled: props.isDisabled || options.isDisabled
+        });
       };
       // oxlint-disable-next-line react/react-compiler
       hooks.useDroppableItem = useDroppableItem;

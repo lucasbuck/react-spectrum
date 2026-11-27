@@ -149,6 +149,12 @@ export interface ListBoxRenderProps {
    * State of the listbox.
    */
   state: ListState<unknown>;
+  /**
+   * Whether the listbox is disabled.
+   *
+   * @selector [data-disabled]
+   */
+  isDisabled: boolean;
 }
 
 export interface ListBoxProps<T>
@@ -267,7 +273,8 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
         layout,
         orientation,
         direction,
-        layoutDelegate
+        layoutDelegate,
+        isDisabled: props.isDisabled
       }),
     [
       collection,
@@ -278,6 +285,7 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
       orientation,
       direction,
       props.keyboardDelegate,
+      props.isDisabled,
       layout,
       layoutDelegate
     ]
@@ -324,7 +332,8 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
     dragState = dragAndDropHooks.useDraggableCollectionState!({
       collection,
       selectionManager,
-      preview: dragAndDropHooks.renderDragPreview ? preview : undefined
+      preview: dragAndDropHooks.renderDragPreview ? preview : undefined,
+      isDisabled: props.isDisabled
     });
     // oxlint-disable-next-line react/react-compiler
     dragAndDropHooks.useDraggableCollection!({}, dragState, listBoxRef);
@@ -339,7 +348,8 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
     // oxlint-disable-next-line react/react-compiler
     dropState = dragAndDropHooks.useDroppableCollectionState!({
       collection,
-      selectionManager
+      selectionManager,
+      isDisabled: props.isDisabled
     });
 
     let dropTargetDelegate =
@@ -372,7 +382,8 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
     isFocusVisible,
     layout: props.layout || 'stack',
     orientation,
-    state
+    state,
+    isDisabled: !!props.isDisabled
   };
   let renderProps = useRenderProps({
     ...props,
@@ -413,7 +424,8 @@ function ListBoxInner<T>({state: inputState, props, listBoxRef}: ListBoxInnerPro
         data-focused={isFocused || undefined}
         data-focus-visible={isFocusVisible || undefined}
         data-layout={props.layout || 'stack'}
-        data-orientation={orientation}>
+        data-orientation={orientation}
+        data-disabled={props.isDisabled || undefined}>
         <Provider
           values={[
             [ListBoxContext, props],

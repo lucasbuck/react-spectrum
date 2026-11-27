@@ -698,6 +698,146 @@ describe('ListBox', () => {
     expect(document.activeElement).toBe(items[2]);
   });
 
+  it('disables the whole list with isDisabled', async () => {
+    let onSelectionChange = jest.fn();
+    let onAction = jest.fn();
+    let {getByRole, getAllByRole} = render(
+      <ListBox
+        aria-label="Test"
+        isDisabled
+        selectionMode="multiple"
+        selectionBehavior="replace"
+        onSelectionChange={onSelectionChange}
+        onAction={onAction}
+        className={({isDisabled}) => (isDisabled ? 'disabled' : '')}>
+        <ListBoxItem id="cat">Cat</ListBoxItem>
+        <ListBoxItem id="dog">Dog</ListBoxItem>
+        <ListBoxItem id="kangaroo">Kangaroo</ListBoxItem>
+      </ListBox>
+    );
+
+    let listbox = getByRole('listbox');
+    let options = getAllByRole('option');
+    expect(listbox).toHaveAttribute('aria-disabled', 'true');
+    expect(listbox).toHaveAttribute('data-disabled', 'true');
+    expect(listbox).toHaveClass('disabled');
+    for (let option of options) {
+      expect(option).toHaveAttribute('aria-disabled', 'true');
+    }
+
+    await user.click(options[0]);
+    expect(onSelectionChange).not.toHaveBeenCalled();
+    expect(onAction).not.toHaveBeenCalled();
+    expect(options[0]).not.toHaveAttribute('aria-selected', 'true');
+
+    await user.tab();
+    expect(document.activeElement).toBe(listbox);
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('{ArrowUp}');
+    await user.keyboard('{Home}');
+    await user.keyboard('{End}');
+    expect(document.activeElement).toBe(listbox);
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps the current selection while the list is disabled', async () => {
+    let onSelectionChange = jest.fn();
+    let {getByRole, getAllByRole} = renderListbox({
+      isDisabled: true,
+      selectionMode: 'multiple',
+      selectedKeys: ['dog'],
+      onSelectionChange
+    });
+
+    let listbox = getByRole('listbox');
+    let options = getAllByRole('option');
+    expect(options[1]).toHaveAttribute('aria-selected', 'true');
+
+    await user.click(options[0]);
+    await user.tab();
+    expect(document.activeElement).toBe(listbox);
+    await user.keyboard('{Escape}');
+    await user.keyboard('{Meta>}a{/Meta}');
+    await user.keyboard('{Control>}a{/Control}');
+
+    expect(options[1]).toHaveAttribute('aria-selected', 'true');
+    expect(options[0]).not.toHaveAttribute('aria-selected', 'true');
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps a select-all selection visible while the list is disabled', () => {
+    let {getAllByRole} = renderListbox({
+      isDisabled: true,
+      selectionMode: 'multiple',
+      selectedKeys: 'all'
+    });
+
+    for (let option of getAllByRole('option')) {
+      expect(option).toHaveAttribute('aria-selected', 'true');
+      expect(option).toHaveAttribute('aria-disabled', 'true');
+    }
+  });
+
+  it('unions isDisabled with disabledKeys', async () => {
+    let {getAllByRole, getByRole, rerender} = render(
+      <ListBox aria-label="Test" isDisabled disabledKeys={['dog']} selectionMode="single">
+        <ListBoxItem id="cat">Cat</ListBoxItem>
+        <ListBoxItem id="dog">Dog</ListBoxItem>
+        <ListBoxItem id="kangaroo">Kangaroo</ListBoxItem>
+      </ListBox>
+    );
+
+    let options = getAllByRole('option');
+    expect(getByRole('listbox')).toHaveAttribute('aria-disabled', 'true');
+    for (let option of options) {
+      expect(option).toHaveAttribute('aria-disabled', 'true');
+    }
+
+    rerender(
+      <ListBox aria-label="Test" isDisabled={false} disabledKeys={['dog']} selectionMode="single">
+        <ListBoxItem id="cat">Cat</ListBoxItem>
+        <ListBoxItem id="dog">Dog</ListBoxItem>
+        <ListBoxItem id="kangaroo">Kangaroo</ListBoxItem>
+      </ListBox>
+    );
+
+    options = getAllByRole('option');
+    expect(getByRole('listbox')).not.toHaveAttribute('aria-disabled');
+    expect(options[0]).not.toHaveAttribute('aria-disabled');
+    expect(options[1]).toHaveAttribute('aria-disabled', 'true');
+    expect(options[2]).not.toHaveAttribute('aria-disabled');
+
+    await user.tab();
+    expect(document.activeElement).toBe(options[0]);
+    await user.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(options[2]);
+  });
+
+  it('disables options added while the list is disabled', () => {
+    let items = [{id: 'cat', name: 'Cat'}];
+    let {getAllByRole, rerender} = render(
+      <ListBox aria-label="Test" items={items} isDisabled selectionMode="single">
+        {item => <ListBoxItem id={item.id}>{item.name}</ListBoxItem>}
+      </ListBox>
+    );
+
+    expect(getAllByRole('option')[0]).toHaveAttribute('aria-disabled', 'true');
+
+    rerender(
+      <ListBox
+        aria-label="Test"
+        items={[...items, {id: 'dog', name: 'Dog'}]}
+        isDisabled
+        selectionMode="single">
+        {item => <ListBoxItem id={item.id}>{item.name}</ListBoxItem>}
+      </ListBox>
+    );
+
+    let options = getAllByRole('option');
+    expect(options).toHaveLength(2);
+    expect(options[1]).toHaveAttribute('aria-disabled', 'true');
+  });
+
   it.each`
     interactionType
     ${'mouse'}

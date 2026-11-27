@@ -382,7 +382,7 @@ function AsyncLoadingExample() {
 ```
 
 ### Disabled
-Use the `disabledKeys` prop to specify which item keys to disable in the ListBox.
+Use the `disabledKeys` prop to specify which item keys to disable in the ListBox. Set `isDisabled` on the ListBox to disable every option. Keys in `disabledKeys` stay disabled when `isDisabled` is turned off.
 
 ```tsx example
 <ListBox width="size-2400" aria-label="Pick your favorite" disabledKeys={["Snake", "Ross"]} selectionMode="single">
